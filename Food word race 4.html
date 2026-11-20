@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Food word race</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light dark;
+--bg:#faf9f5;--card:#fff;--tx:#1f1e1d;--tx2:#6b6a66;--bd:#d9d6cc;--me-bg:#C0DD97;--me-tx:#27500A;--th-bg:#F5C4B3;--th-tx:#712B13;--sel-bg:#B5D4F4;--sel-tx:#0C447C;--btn:#1f1e1d;--btn-tx:#faf9f5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#262624;--card:#30302e;--tx:#f0eee6;--tx2:#a8a69e;--bd:#4a4945;--me-bg:#27500A;--me-tx:#C0DD97;--th-bg:#712B13;--th-tx:#F5C4B3;--sel-bg:#0C447C;--sel-tx:#B5D4F4;--btn:#f0eee6;--btn-tx:#262624}}
+:root[data-theme="dark"]{--bg:#262624;--card:#30302e;--tx:#f0eee6;--tx2:#a8a69e;--bd:#4a4945;--me-bg:#27500A;--me-tx:#C0DD97;--th-bg:#712B13;--th-tx:#F5C4B3;--sel-bg:#0C447C;--sel-tx:#B5D4F4;--btn:#f0eee6;--btn-tx:#262624}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,sans-serif}
+body{max-width:460px;margin:0 auto;padding:16px}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+p{margin:0 0 12px;color:var(--tx2);font-size:15px;line-height:1.5}
+input{width:100%;box-sizing:border-box;font-size:17px;padding:10px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);margin:4px 0 14px}
+label{font-size:13px;color:var(--tx2)}
+button.main{width:100%;font-size:17px;padding:12px;border:0;border-radius:8px;background:var(--btn);color:var(--btn-tx);font-weight:500}
+button.alt{font-size:14px;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;background:transparent;color:var(--tx)}
+#score{display:flex;gap:8px;margin:0 0 10px}
+.sc{flex:1;padding:8px 12px;border-radius:8px;font-size:14px}
+.sc b{display:block;font-size:22px;font-weight:500}
+#g{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;margin:0 0 12px;touch-action:manipulation}
+#g button{aspect-ratio:1;padding:0;font-size:clamp(14px,4.6vw,19px);font-weight:500;background:var(--card);border:1px solid var(--bd);border-radius:5px;color:var(--tx)}
+#g button.me{background:var(--me-bg);color:var(--me-tx);border-color:transparent}
+#g button.th{background:var(--th-bg);color:var(--th-tx);border-color:transparent}
+#g button.sel{background:var(--sel-bg);color:var(--sel-tx);border-color:transparent}
+#wl span{display:inline-block;font-size:13px;padding:4px 9px;margin:0 5px 5px 0;border:1px solid var(--bd);border-radius:8px;color:var(--tx2)}
+#wl span.me{background:var(--me-bg);color:var(--me-tx);border-color:transparent;text-decoration:line-through}
+#wl span.th{background:var(--th-bg);color:var(--th-tx);border-color:transparent;text-decoration:line-through}
+#st{font-size:14px;color:var(--tx2);min-height:21px;margin:6px 0 10px}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+</style></head><body>
+<div id="lobby">
+<h1>Food word race</h1>
+<p>Both of you open this page, enter the same room code, and race to find the hidden words first.</p>
+<label for="nm">Your name</label>
+<input id="nm" maxlength="14" placeholder="Happ" autocomplete="off">
+<label for="cd">Room code</label>
+<input id="cd" maxlength="12" autocapitalize="none" autocomplete="off">
+<button class="main" id="go">Start game</button>
+</div>
+<div id="game" style="display:none">
+<div class="row" style="margin-bottom:8px"><span style="font-size:14px;color:var(--tx2)">Room code: <b id="rc" style="color:var(--tx);font-weight:500"></b></span><button class="alt" id="nw">New room</button></div>
+<div id="score"><div class="sc" id="s1" style="background:var(--me-bg);color:var(--me-tx)">You<b id="n1">0</b></div><div class="sc" id="s2" style="background:var(--th-bg);color:var(--th-tx)"><span id="on">Waiting</span><b id="n2">0</b></div></div>
+<div id="g"></div>
+<div id="wl"></div>
+<div id="st"></div>
+</div>
+<script>
+var POOL=["PIZZA","SUSHI","TACO","PASTA","BURGER","MANGO","RAMEN","CURRY","BREAD","SALAD","WAFFLE","NOODLES","PAPAYA","LEMON","GRAPE","PEACH","BANANA","CHERRY","APPLE","MELON","BAGEL","DONUT","PANCAKE","STEAK","BEANS","GINGER","GARLIC","PEPPER","COOKIE","FRIES","OLIVE","HONEY"];
+var N=10,DIRS=[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]];
+var $=function(i){return document.getElementById(i)};
+var WORDS,grid,place,mine,sel,room,code,myName,peerFound,oppName;
+function rngFor(s){var h=7;for(var i=0;i<s.length;i++)h=(Math.imul(h,31)+s.charCodeAt(i))|0;return function(){h|=0;h=h+0x6D2B79F5|0;var t=Math.imul(h^h>>>15,1|h);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function build(seed){
+  var rnd=rngFor(seed),pool=POOL.slice();
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t}
+  WORDS=pool.slice(0,8);
+  grid=[];for(var k=0;k<N*N;k++)grid.push('');
+  place={};
+  WORDS.slice().sort(function(a,b){return b.length-a.length}).forEach(function(w){
+    for(var tries=0;tries<800;tries++){
+      var d=DIRS[Math.floor(rnd()*8)],r=Math.floor(rnd()*N),c=Math.floor(rnd()*N);
+      var er=r+d[0]*(w.length-1),ec=c+d[1]*(w.length-1);
+      if(er<0||er>=N||ec<0||ec>=N)continue;
+      var ok=true,cells=[];
+      for(var i2=0;i2<w.length;i2++){var ix=(r+d[0]*i2)*N+c+d[1]*i2;if(grid[ix]&&grid[ix]!==w[i2]){ok=false;break}cells.push(ix)}
+      if(!ok)continue;
+      cells.forEach(function(ix,i3){grid[ix]=w[i3]});
+      place[w]=cells;break;
+    }
+  });
+  var L="ABCDEFGHIJKLMNOPRSTUY";
+  for(var m=0;m<grid.length;m++)if(!grid[m])grid[m]=L[Math.floor(rnd()*L.length)];
+}
+function owners(){
+  var best={};
+  Object.keys(mine).forEach(function(w){best[w]={t:mine[w],o:'me'}});
+  Object.keys(peerFound).forEach(function(w){var t=peerFound[w];if(!best[w]||t<best[w].t)best[w]={t:t,o:'th'}});
+  return best;
+}
+function render(){
+  var own=owners(),cellOwner={},n1=0,n2=0;
+  WORDS.forEach(function(w){if(own[w]){place[w].forEach(function(ix){cellOwner[ix]=own[w].o});if(own[w].o==='me')n1++;else n2++}});
+  var g=$('g');g.innerHTML='';
+  grid.forEach(function(ch,i){
+    var b=document.createElement('button');b.textContent=ch;
+    b.className=cellOwner[i]||(sel===i?'sel':'');
+    b.onclick=function(){pick(i)};g.appendChild(b);
+  });
+  var wl=$('wl');wl.innerHTML='';
+  WORDS.forEach(function(w){var s=document.createElement('span');s.textContent=w;if(own[w])s.className=own[w].o;wl.appendChild(s)});
+  $('n1').textContent=n1;$('n2').textContent=n2;
+  $('on').textContent=oppName||'Waiting for friend';
+  if(n1+n2===WORDS.length){
+    $('st').textContent=n1>n2?'You win, '+n1+' to '+n2+'.':n1<n2?(oppName||'Your friend')+' wins, '+n2+' to '+n1+'.':'It’s a tie.';
+  }
+}
+function setSt(t){if(Object.keys(owners()).length<WORDS.length)$('st').textContent=t}
+function pick(i){
+  var own=owners();
+  if(Object.keys(own).length===WORDS.length)return;
+  if(sel===null){sel=i;setSt('Now tap the last letter.');render();return}
+  if(sel===i){sel=null;setSt('Selection cleared.');render();return}
+  var r1=Math.floor(sel/N),c1=sel%N,r2=Math.floor(i/N),c2=i%N,dr=r2-r1,dc=c2-c1,msg='That’s not a word. Try again.';
+  if(dr===0||dc===0||Math.abs(dr)===Math.abs(dc)){
+    var len=Math.max(Math.abs(dr),Math.abs(dc))+1,sr=Math.sign(dr),sc=Math.sign(dc),s='';
+    for(var k=0;k<len;k++)s+=grid[(r1+sr*k)*N+c1+sc*k];
+    var rev=s.split('').reverse().join('');
+    var w=WORDS.filter(function(x){return x===s||x===rev})[0];
+    if(w){
+      if(own[w])msg=own[w].o==='me'?'You already found '+w+'.':(oppName||'Your friend')+' got '+w+' first.';
+      else{mine[w]=Date.now();msg='Found '+w+'.';if(room)room.presence({name:myName,found:mine}).catch(function(){})}
+    }
+  }
+  sel=null;render();$('st').textContent=msg;
+}
+function readPeers(){
+  if(!room)return;
+  var pf={},on='';
+  room.peers().forEach(function(p){
+    if(p.isMe||p.kind!=='viewer')return;
+    var pr=p.presence||{};
+    if(typeof pr.name==='string'&&!on)on=pr.name.slice(0,14);
+    if(!on)on='Friend';
+    var f=pr.found;
+    if(f&&typeof f==='object')WORDS.forEach(function(w){if(typeof f[w]==='number'&&(!pf[w]||f[w]<pf[w]))pf[w]=f[w]});
+  });
+  peerFound=pf;oppName=on;render();
+}
+async function start(){
+  myName=($('nm').value.trim()||'Player').slice(0,14);
+  code=($('cd').value.toLowerCase().replace(/[^a-z0-9]/g,'')||'food');
+  try{localStorage.setItem('wr_name',myName)}catch(e){}
+  build(code);mine={};peerFound={};oppName='';sel=null;room=null;
+  $('lobby').style.display='none';$('game').style.display='block';$('rc').textContent=code;
+  $('st').textContent='Tap the first letter of a word, then the last.';
+  render();
+  try{
+    var R=await claude.use('room');
+    if(R){
+      room=await R.join('wr-'+code);
+      room.onPeers(readPeers);
+      await room.presence({name:myName,found:{}});
+      readPeers();
+    }else{$('st').textContent='Solo mode: live play needs both of you signed in with access to this page.'}
+  }catch(e){room=null;$('st').textContent='Couldn’t connect to the room. You can still play solo.'}
+}
+function rc(){var a='abcdefghjkmnpqrstuvwxyz23456789',s='';for(var i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
+$('cd').value=rc();
+try{var sn=localStorage.getItem('wr_name');if(sn)$('nm').value=sn}catch(e){}
+$('go').onclick=start;
+$('nw').onclick=async function(){
+  if(room){try{await room.leave()}catch(e){}room=null}
+  $('game').style.display='none';$('lobby').style.display='block';$('cd').value=rc();
+};
+</script></body></html>
