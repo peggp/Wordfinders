@@ -115,7 +115,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const st={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 $$('nav button').forEach(b=>b.onclick=()=>{$$('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));$$('section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t))});
 
-/* Word race */
+/* Word finders */
 const FOOD=['MANGO','BREAD','PASTA','OLIVE','LEMON','HONEY','PEACH','CURRY','SALAD','TACOS','RICE','BEANS','PIZZA','GRAPE','SUSHI','CREAM','STEAK','PLUM','BERRY','FIGS','PEAR','SOUP','CAKE','CORN'];
 const N=10,DIRS=[[1,0],[0,1],[1,1]];let G,placed,found,t0,tick,sel;
 const hash=s=>{let h=1779033703;for(const c of s.toUpperCase()){h=Math.imul(h^c.charCodeAt(0),3432918353);h=h<<13|h>>>19}return h>>>0};
