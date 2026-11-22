@@ -9,7 +9,7 @@ Good Luck!
 :root{--bg:#02030a;--blue:#142c7a;--blue2:#081646;--gold:#ff7ab8;--ink:#fff4fa;--mut:#c4b4e0;--line:rgba(255,122,184,.4);
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100vh;color:var(--ink);font:400 15px/1.5 Manrope,system-ui,sans-serif;
 background:radial-gradient(70% 50% at 0% 12%,rgba(255,122,184,.3),transparent 70%),radial-gradient(60% 45% at 100% 100%,rgba(255,122,184,.18),transparent 70%),radial-gradient(120% 90% at 10% 0%,var(--blue) 0%,var(--blue2) 35%,var(--bg) 80%),var(--bg);background-attachment:fixed}
 .laurel{position:fixed;left:4vw;top:12vh;height:72vh;width:auto;opacity:.85;pointer-events:none;z-index:0;transform:rotate(-6deg);filter:drop-shadow(0 0 8px rgba(255,190,110,.45))}
@@ -24,7 +24,9 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 section{display:none}section.on{display:block}
 .panel{background:rgba(4,6,13,.5);border:1px solid var(--line);border-radius:12px;padding:18px;backdrop-filter:blur(1px)}
 label{display:block;font-size:13px;color:var(--mut);margin:0 0 4px}
-input,select{width:100%;background:#050914;color:var(--ink);border:1px solid rgba(154,167,204,.35);border-radius:6px;padding:10px 12px;font:inherit}
+input,select{width:100%;background:#050914;color:var(--ink);border:1px solid rgba(154,167,204,.35);border-radius:6px;padding:10px 12px;font:inherit;font-size:16px}
+input[type=datetime-local]{min-width:0;max-width:100%;min-height:44px;line-height:1.2;text-align:left;-webkit-appearance:none;appearance:none}
+input[type=datetime-local]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px}.row>div{flex:1;min-width:130px}
 .btn{background:var(--gold);color:#14100a;border:0;border-radius:6px;padding:11px 18px;font:400 17px "Lilita One",system-ui,sans-serif;cursor:pointer}
 .btn.ghost{background:none;color:var(--gold);border:1px solid var(--line)}
