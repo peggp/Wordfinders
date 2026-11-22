@@ -1,4 +1,4 @@
-
+Good Luck!
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -82,11 +82,12 @@ audio{width:100%;margin-top:14px}
 <section id="game" class="on"><div class="panel">
 <div class="row"><div><label for="name">Your name</label><input id="name" maxlength="16"></div>
 <div><label for="room">Room code</label><input id="room" maxlength="12" value="LAUREL"></div>
+<div><label for="theme">Theme</label><select id="theme"><option value="all">Mixed</option><option value="food">Food</option><option value="animals">Animals</option><option value="nature">Nature</option><option value="places">Places</option><option value="fun">Fun</option></select></div>
 <button class="btn" id="start">Start game</button></div>
 <div class="bar"><span id="timer">0:00</span><span id="count"></span></div>
 <ul class="words" id="words"></ul>
 <div id="grid"></div>
-<p class="hint">Tap the first and last letter of a food word. Everyone with the same room code gets the same grid.</p>
+<p class="hint">Tap the first and last letter of a word. Words can run in any direction. Press Start game for a brand new puzzle every time. Friends with the same room code, theme and round number get the same puzzle.</p>
 <div id="win" style="display:none"><p id="winmsg"></p><button class="btn ghost" id="share">Share result</button></div>
 </div></section>
 
@@ -117,14 +118,14 @@ const st={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}
 $$('nav button').forEach(b=>b.onclick=()=>{$$('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));$$('section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t))});
 
 /* Word race */
-const FOOD=['MANGO','BREAD','PASTA','OLIVE','LEMON','HONEY','PEACH','CURRY','SALAD','TACOS','RICE','BEANS','PIZZA','GRAPE','SUSHI','CREAM','STEAK','PLUM','BERRY','FIGS','PEAR','SOUP','CAKE','CORN'];
-const N=10,DIRS=[[1,0],[0,1],[1,1]];let G,placed,found,t0,tick,sel;
+const W={food:'MANGO BREAD PASTA OLIVE LEMON HONEY PEACH CURRY SALAD TACOS RICE BEANS PIZZA GRAPE SUSHI CREAM STEAK PLUM BERRY FIGS PEAR SOUP CAKE CORN WAFFLE PANCAKE COOKIE MUFFIN NOODLE BURGER PEPPER ONION GARLIC BASIL CHEESE BUTTER YOGURT COCONUT PAPAYA CHERRY MELON TOAST'.split(' '),animals:'TIGER ZEBRA PANDA KOALA OTTER EAGLE SHARK WHALE HORSE RABBIT DOLPHIN FALCON TURTLE PARROT BUTTERFLY LION BEAR FOX DEER OWL SEAL SWAN CRAB MONKEY GIRAFFE PENGUIN FLAMINGO PEACOCK KITTEN PUPPY HAMSTER LLAMA'.split(' '),nature:'RIVER OCEAN FOREST DESERT ISLAND MEADOW CANYON GLACIER VOLCANO RAINBOW SUNSET MOUNTAIN BREEZE FLOWER ROSE TULIP DAISY ORCHID LILY JASMINE CLOUD STORM MOON STAR COMET'.split(' '),places:'PARIS LONDON TOKYO ROME CAIRO LAGOS DUBAI MIAMI TEXAS BEACH AIRPORT MUSEUM CASTLE BRIDGE GARDEN MARKET HOTEL HARBOR TRAIN'.split(' '),fun:'HAPPY SMILE DANCE MUSIC LAUGH DREAM SPARKLE PARTY GIFT BALLOON CANDLE PRESENT FRIEND LOVE CHEER JOY MAGIC GLITTER'.split(' ')};let rnd=0,lastRoom='';
+const N=10,DIRS=[[1,0],[0,1],[1,1],[-1,0],[0,-1],[-1,-1],[1,-1],[-1,1]];let G,placed,found,t0,tick,sel;
 const hash=s=>{let h=1779033703;for(const c of s.toUpperCase()){h=Math.imul(h^c.charCodeAt(0),3432918353);h=h<<13|h>>>19}return h>>>0};
 const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-function build(code){const r=rng(hash(code));const pool=[...FOOD].sort(()=>r()-.5).filter(w=>w.length<=N).slice(0,8);
+function build(code){const r=rng(hash(code));const th=$('#theme').value,base=th==='all'?Object.values(W).flat():W[th];const pool=[...new Set(base)].sort(()=>r()-.5).filter(w=>w.length<=N).slice(0,8);
  G=Array.from({length:N},()=>Array(N).fill(''));placed=[];
- for(const w of pool){for(let k=0;k<200;k++){const[d0,d1]=DIRS[Math.floor(r()*3)],x=Math.floor(r()*N),y=Math.floor(r()*N);
-  const ex=x+d0*(w.length-1),ey=y+d1*(w.length-1);if(ex>=N||ey>=N)continue;
+ for(const w of pool){for(let k=0;k<200;k++){const[d0,d1]=DIRS[Math.floor(r()*DIRS.length)],x=Math.floor(r()*N),y=Math.floor(r()*N);
+  const ex=x+d0*(w.length-1),ey=y+d1*(w.length-1);if(ex>=N||ey>=N||ex<0||ey<0)continue;
   let ok=true;for(let i=0;i<w.length;i++){const c=G[y+d1*i][x+d0*i];if(c&&c!==w[i])ok=false}
   if(!ok)continue;for(let i=0;i<w.length;i++)G[y+d1*i][x+d0*i]=w[i];placed.push({w,x,y,d0,d1});break}}
  const L='ABCDEFGHIJKLMNOPRSTUY';for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(!G[y][x])G[y][x]=L[Math.floor(r()*L.length)]}
@@ -139,11 +140,11 @@ function pick(x,y){if(!placed)return;if(!sel){sel=[x,y];cell(x,y).classList.add(
  const cs=[];for(let i=0;i<len;i++)cs.push([sx+dx*i,sy+dy*i]);const s=cs.map(c=>G[c[1]][c[0]]).join('');
  const p=placed.find(p=>!found.has(p.w)&&(p.w===s||p.w===[...s].reverse().join('')));
  if(p){found.add(p.w);cs.forEach(c=>cell(c[0],c[1]).classList.add('found'));$('#w-'+p.w).classList.add('done');upd();if(found.size===placed.length)end()}}
-const upd=()=>$('#count').textContent=`${found?found.size:0} of ${placed?placed.length:0} found`;
+const upd=()=>$('#count').textContent=`Round ${rnd}: ${found?found.size:0} of ${placed?placed.length:0} found`;
 function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function end(){clearInterval(tick);const s=Math.round((Date.now()-t0)/1000);$('#win').style.display='block';
  $('#winmsg').textContent=`${$('#name').value||'You'} found all ${placed.length} words in ${fmt(s)}.`}
-$('#start').onclick=()=>{const c=($('#room').value||'LAUREL').trim();st.set('name',$('#name').value);build(c);found=new Set();sel=null;draw();$('#win').style.display='none';
+$('#start').onclick=()=>{const c=($('#room').value||'LAUREL').trim();if(c!==lastRoom){rnd=0;lastRoom=c}rnd++;st.set('name',$('#name').value);build(c+'#'+rnd+$('#theme').value);found=new Set();sel=null;draw();$('#win').style.display='none';
  clearInterval(tick);t0=Date.now();$('#timer').textContent='0:00';tick=setInterval(()=>$('#timer').textContent=fmt(Math.round((Date.now()-t0)/1000)),500)};
 $('#share').onclick=async()=>{const m=`${$('#winmsg').textContent} Room ${$('#room').value}. Beat me!`;try{if(navigator.share)await navigator.share({text:m});else{await navigator.clipboard.writeText(m);$('#share').textContent='Copied'}}catch(e){}};
 $('#name').value=st.get('name','');
